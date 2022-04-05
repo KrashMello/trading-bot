@@ -8,7 +8,7 @@ import "dotenv/config";
 const app = express;
 const server = http.createServer(app);
 // modules
-import { menu } from "./modules/gui.mjs";
+import { menu } from "./modules/cli.mjs";
 
 server.listen(5000, () => {
   console.clear();
