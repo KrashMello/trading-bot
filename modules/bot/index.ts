@@ -1,4 +1,5 @@
 import Binance from 'node-binance-api'
+import { Signal_CCI, Signal_MACD } from '@Modules/indicators/index'
 
 const binance = new Binance().options({
   APIKEY: process.env.APIKEY,
@@ -13,7 +14,13 @@ export class Bot {
   protected sensitive: number
   protected testMode: boolean
   private principalCurrencyMount: number = 0
+  private testPrincipalCurrencyMount: number = 15
   private secondaryCurrencyMount: number = 0
+  private testSecondaryCurrencyMount: number = 0
+  private sensitives: { cciPeriod: number; sensitiveMACD: number } = {
+    cciPeriod: 0,
+    sensitiveMACD: 0,
+  }
 
   constructor(
     name: string,
@@ -75,8 +82,24 @@ export class Bot {
     return this.parAvailable
   }
 
-  public set setParAvailable(value : boolean) {
-    this.parAvailable = value;
+  public set setParAvailable(value: boolean) {
+    this.parAvailable = value
+  }
+
+  public get getTestPincipalCurrencyMount(): number {
+    return this.testPrincipalCurrencyMount
+  }
+
+  public set setTestPrincipalCurrencyMount(value: number) {
+    this.testPrincipalCurrencyMount = value
+  }
+
+  public get getTestSecondaryCurrencyMount(): number {
+    return this.testSecondaryCurrencyMount
+  }
+
+  public set setTestSecondaryCurrencyMount(value: number) {
+    this.testSecondaryCurrencyMount = value
   }
 
   private async configure(crossOne: string, crossTwo: string) {
@@ -85,11 +108,99 @@ export class Bot {
     let auxParAvailable = false
     let auxPrincipalCurrencyMount = 0
     let auxSecondaryCurrencyMount = 0
+    let sensitive: {
+      percent: number
+      cciPeriod: number
+      sensitiveMACD: number
+    }[] = []
+    let auxcandlesticks: {
+      open: number[]
+      high: number[]
+      low: number[]
+      close: number[]
+      period: number
+    } = { open: [], high: [], low: [], close: [], period: 0 }
 
     do {
       await binance
-        .candlesticks(this.cryptoPar, '5m')
+        .candlesticks(this.cryptoPar, this.temporality)
         .then((_r: any) => {
+          _r.map((v: any) => {
+            auxcandlesticks.open.push(Number(v[1]))
+            auxcandlesticks.high.push(Number(v[2]))
+            auxcandlesticks.low.push(Number(v[3]))
+            auxcandlesticks.close.push(Number(v[4]))
+          })
+          let actualmount = 10
+          let order = false
+          for (let x = 0; x < 4; x++) {
+            auxcandlesticks.period = x + 3
+            for (let y = 0; y < 13; y++) {
+              actualmount = 10
+              order = false
+              let cci = Signal_CCI(auxcandlesticks)
+              let macd = Signal_MACD(auxcandlesticks.close, y + 3)
+              let minicial = cci.length - macd.length
+              cci.map((v: any, z: any) => {
+                let adviced: any = false
+                let direction: any = 'up'
+                let close_price = Number(
+                  auxcandlesticks?.close?.find((_el, k) => {
+                    return k === z + (auxcandlesticks.close.length - cci.length)
+                  })
+                )
+                if (z >= minicial) {
+                  adviced = macd[z - minicial]?.adviced
+                  direction = macd[z - minicial]?.direction
+                }
+                if (
+                  adviced &&
+                  direction === 'up' &&
+                  v === 'up' &&
+                  !order &&
+                  z >= auxcandlesticks.close.length - cci.length
+                ) {
+                  order = true
+                  actualmount = actualmount / close_price
+                  return { actualmount, z, t: 'buy' }
+                } else if (
+                  adviced &&
+                  direction === 'down' &&
+                  v === 'down' &&
+                  order &&
+                  z >= auxcandlesticks.close.length - cci.length
+                ) {
+                  order = false
+                  actualmount = actualmount * close_price
+                  return { actualmount, z, t: 'sell' }
+                } else if (z === cci.length - 1 && order) {
+                  actualmount = actualmount * close_price
+                  return 'none'
+                } else return 'none'
+              })
+              sensitive.push({
+                percent: (actualmount * 100) / 10 - 100,
+                cciPeriod: auxcandlesticks.period,
+                sensitiveMACD: y + 3,
+              })
+            }
+          }
+          let s = sensitive
+            .sort((a, b) => {
+              if (a.percent > b.percent) {
+                return 1
+              }
+              if (a.percent < b.percent) {
+                return -1
+              }
+              // a must be equal to b
+              return 0
+            })
+            .reverse() as any
+          console.log(s)
+          console.log(s[0])
+          this.sensitives.sensitiveMACD = s[0].sensitiveMACD
+          this.sensitives.cciPeriod = s[0].cciPeriod
           i = 999
           auxParAvailable = true
         })
@@ -100,18 +211,24 @@ export class Bot {
     } while (i < 2)
     this.parAvailable = auxParAvailable
     if (this.parAvailable)
-        await binance.balance().then((balances: any)=>{
-
+      await binance
+        .balance()
+        .then((balances: any) => {
           auxPrincipalCurrencyMount = Number(balances[crossOne].available)
           auxSecondaryCurrencyMount = Number(balances[crossTwo].available)
-    }).catch((error:any)=>{
-
-      if (error) return console.error(error.body)
-    })
-           this.principalCurrencyMount = auxPrincipalCurrencyMount
+        })
+        .catch((error: any) => {
+          if (error) return console.error(error.body)
+        })
+    this.principalCurrencyMount = auxPrincipalCurrencyMount
     this.secondaryCurrencyMount = auxSecondaryCurrencyMount
-  
-    console.info({1:this.principalCurrencyMount,2:this.secondaryCurrencyMount, 3:this.parAvailable})
+
+    console.info({
+      1: this.principalCurrencyMount,
+      2: this.secondaryCurrencyMount,
+      3: this.parAvailable,
+      4: this.sensitives,
+    })
   }
 
   // private buy() {}
@@ -121,20 +238,39 @@ export class Bot {
   protected evaluation() {}
 
   protected async calculate() {
-    binance.websockets.chart(
-      this.cryptoPar,
-      this.temporality,
-      (symbol: any, _interval: any, chart: any) => {
-        Object.values(chart)
-          .reverse()
-          .map((v: any) => {
-            console.log(v)
-          })
-        let tick = binance.last(chart)
-        const last = chart[tick].close
-        console.info(symbol + ' last price: ' + last)
-      }
-    )
+    try {
+      binance.websockets.chart(
+        this.cryptoPar,
+        this.temporality,
+        (_symbol: any, _interval: any, chart: any) => {
+          let values: {
+            open: number[]
+            high: number[]
+            low: number[]
+            close: number[]
+          } = {
+            open: [],
+            high: [],
+            low: [],
+            close: [],
+          }
+          Object.values(chart)
+            .reverse()
+            .map((v: any) => {
+              values.open.push(Number(v.open))
+              values.high.push(Number(v.high))
+              values.low.push(Number(v.low))
+              values.close.push(Number(v.close))
+            })
+          // console.info(values)
+          // let tick = binance.last(chart)
+          // const last = chart[tick].close
+          // console.info(symbol + ' last price: ' + last)
+        }
+      )
+    } catch (error: any) {
+      this.start()
+    }
   }
 
   public start() {
