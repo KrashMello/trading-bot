@@ -1,4 +1,5 @@
 import { CCI, MACD } from 'technicalindicators'
+import { signalMACDOutput } from './types'
 
 // green
 /**
@@ -11,12 +12,7 @@ import { CCI, MACD } from 'technicalindicators'
 export function Signal_MACD(
   values: number[],
   sensitive: number
-): {
-  duration: number
-  persisted: boolean
-  direction: string
-  adviced: boolean
-}[] {
+): signalMACDOutput[] {
   let donw_up_persistency =
     25 *
     Math.pow(
@@ -38,12 +34,7 @@ export function Signal_MACD(
     adviced: false,
   }
 
-  let MACDt: {
-    duration: number
-    persisted: boolean
-    direction: string
-    adviced: boolean
-  }[] = []
+  let MACDt: signalMACDOutput[] = []
   if (values.length <= 0) return MACDt
 
   return MACD.calculate({
