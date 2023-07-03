@@ -212,6 +212,8 @@ private mountToBuy: number = 0
                 mountToBuy:this.mountToBuy,
                 actualMount: this.testPrincipalCurrencyMount,
                 actualPrice: lastPrice,
+createAt: new Date().toLocaleString("en-US",{timeZone: "UTC"}),
+
               })
             } else if (
            macd[0]?.adviced &&
@@ -221,7 +223,6 @@ private mountToBuy: number = 0
         ) {
           this.order = false
           this.testPrincipalCurrencyMount = this.testSecondaryCurrencyMount * Number(lastPrice) + this.testPrincipalCurrencyMount
-          this.testSecondaryCurrencyMount = 0
           this.sell( {
             order: 'sell',
             actualMount: this.testPrincipalCurrencyMount,
@@ -231,7 +232,9 @@ private mountToBuy: number = 0
             100
 ,
             sellPrice: lastPrice,
+              createAt: new Date().toLocaleString("en-US",{timeZone: "UTC"}),
           })
+this.testSecondaryCurrencyMount = 0
         } 
             // console.info(values.close.reverse()[0])
             // let tick = binance.last(chart)
