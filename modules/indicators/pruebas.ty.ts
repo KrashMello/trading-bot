@@ -7171,105 +7171,107 @@ let percent = 0
 let cciAdviced
 let sum = 0
 
-for (let x = 0; x < 9; x++) {
-  candlesticks.period = x + 3
-  cci = Signal_CCI(candlesticks)
-  adviced = false
-  direction = 'down'
-  diffIndexCandlesticksCCI = candlesticks.close.length - cci.length
-  for (let y = 0; y < 13; y++) {
-    actualmount = 10
-    bmount = 0
-    mount = 0
-    percent = 0
-    sum = 0
-    order = false
-    macd = Signal_MACD(candlesticks.close, y + 3)
-    diffIndexCandlesticksMACD = candlesticks.close.length - macd.length
+// for (let x = 0; x < 19; x++) {
+//   candlesticks.period = x + 3
+//   cci = Signal_CCI(candlesticks)
+//   adviced = false
+//   direction = 'down'
+//   diffIndexCandlesticksCCI = candlesticks.close.length - cci.length 
+//   for (let y = 0; y < 13; y++) {
+//     actualmount = 10
+//     bmount = 0
+//     mount = 0
+//     percent = 0
+//     sum = 0
+//     order = false
+//     macd = Signal_MACD(candlesticks.close, y + 3)
     
-    candlesticks.close
-      .map((v: any, z: any) => {
-        if (z < diffIndexCandlesticksMACD || z < diffIndexCandlesticksCCI)
-          return 'none'
+//     diffIndexCandlesticksMACD = candlesticks.close.length - macd.length
 
-        close_price = v
-        adviced = macd[z - diffIndexCandlesticksMACD]?.adviced
-        direction = macd[z - diffIndexCandlesticksMACD]?.direction
-        cciAdviced = cci[z - diffIndexCandlesticksCCI]
-        if (adviced && direction === 'up' && cciAdviced === 'up' && !order) {
-          order = true
-          mount = Math.round(actualmount) - 1
-          bmount = mount / close_price
-          actualmount = actualmount - mount
-          // console.log({z, close_price, actualmount, t: 'buy'})
-          return {
-            z,
-            order: 'buy',
-            mount,
-            actualprice: close_price,
-            m1: actualmount,
-            bmount,
-          }
-        } else if (
-          adviced &&
-          direction === 'down' &&
-          cciAdviced === 'down' &&
-          order
-        ) {
-          order = false
-          percent =
-            ((bmount * close_price + actualmount) * 100) /
-            (actualmount + mount) -
-            100
-          sum += percent
-          actualmount = bmount * close_price + actualmount
-          // console.log({z, close_price, actualmount, t: 'sell'})
-          return {
-            z,
-            percent,
-            order: 'sell',
-            actualprice: close_price,
-            m1: actualmount,
-          }
-        } else if (z === candlesticks.close.length - 1 && order) {
-          order = false
-          percent =
-            ((bmount * close_price + actualmount) * 100) /
-              (actualmount + mount) -
-            100
-          sum += percent
-          actualmount = bmount * close_price + actualmount
-          // console.log({z, close_price, actualmount, t: 'sell'})
-          return {
-            z,
-            percent,
-            order: 'sell',
-            actualprice: close_price,
-            m1: actualmount,
-          }
-        } else return 'none'
-      })
-    sensitive.push({
-      percent: sum,
-      cciPeriod: candlesticks.period,
-      sensitiveMACD: y + 3,
-    })
-  }
+//     candlesticks.close
+//       .map((v: any, z: any) => {
+//         if (z < diffIndexCandlesticksMACD || z < diffIndexCandlesticksCCI)
+//           return 'none'
 
-console.log(
-  sensitive
-    .sort((a, b) => {
-      if (a.percent > b.percent) {
-        return 1
-      }
-      if (a.percent < b.percent) {
-        return -1
-      }
-      // a must be equal to b
-      return 0
-    })
-    .reverse()[0]
-)
+//         close_price = v
+//         adviced = macd[z - diffIndexCandlesticksMACD]?.adviced
+//         direction = macd[z - diffIndexCandlesticksMACD]?.direction
+//         cciAdviced = cci[z - diffIndexCandlesticksCCI]
+//         if (adviced && direction === 'up' && cciAdviced === 'up' && !order) {
+//           order = true
+//           mount = Math.round(actualmount) - 1
+//           bmount = mount / close_price
+//           actualmount = actualmount - mount
+//           // console.log({z, close_price, actualmount, t: 'buy'})
+//           return {
+//             z,
+//             order: 'buy',
+//             mount,
+//             actualprice: close_price,
+//             m1: actualmount,
+//             bmount,
+//           }
+//         } else if (
+//           adviced &&
+//           direction === 'down' &&
+//           cciAdviced === 'down' &&
+//           order
+//         ) {
+//           order = false
+//           percent =
+//             ((bmount * close_price + actualmount) * 100) /
+//             (actualmount + mount) -
+//             100
+//           sum += percent
+//           actualmount = bmount * close_price + actualmount
+//           // console.log({z, close_price, actualmount, t: 'sell'})
+//           return {
+//             z,
+//             percent,
+//             order: 'sell',
+//             actualprice: close_price,
+//             m1: actualmount,
+//           }
+//         } else if (z === candlesticks.close.length - 1 && order) {
+//           order = false
+//           percent =
+//             ((bmount * close_price + actualmount) * 100) /
+//             (actualmount + mount) -
+//             100
+//           sum += percent
+//           actualmount = bmount * close_price + actualmount
+//           // console.log({z, close_price, actualmount, t: 'sell'})
+//           return {
+//             z,
+//             percent,
+//             order: 'sell',
+//             actualprice: close_price,
+//             m1: actualmount,
+//           }
+//         } else return 'none'
+//       })
+//     sensitive.push({
+//       percent: sum,
+//       cciPeriod: candlesticks.period,
+//       sensitiveMACD: y + 3,
+//     })
+//   }
+// }
+
+// console.log(
+//   sensitive
+//     .sort((a, b) => {
+//       if (a.percent > b.percent) {
+//         return 1
+//       }
+//       if (a.percent < b.percent) {
+//         return -1
+//       }
+//       // a must be equal to b
+//       return 0
+//     })
+//     .reverse()
+// )
 candlesticks.period = 3
 cci = Signal_CCI(candlesticks)
 macd = Signal_MACD(candlesticks.close, 5)
@@ -7279,72 +7281,83 @@ bmount = 0
 mount = 0
 percent = 0
 sum = 0
-diffIndexCandlesticksCCI = candlesticks.close.length - cci.length
-diffIndexCandlesticksMACD = candlesticks.close.length - macd.length
-console.log(
-  candlesticks.close
-    .map((v: any, z: any) => {
-      if (z < diffIndexCandlesticksMACD || z < diffIndexCandlesticksCCI)
-        return 'none'
+diffIndexCandlesticksCCI = candlesticks.close.length - cci.length 
+diffIndexCandlesticksMACD = candlesticks.close.length - macd.length 
 
-      close_price = v
-      adviced = macd[z - diffIndexCandlesticksMACD]?.adviced
-      direction = macd[z - diffIndexCandlesticksMACD]?.direction
-      cciAdviced = cci[z - diffIndexCandlesticksCCI]
-      if (adviced && direction === 'up' && cciAdviced === 'up' && !order) {
-        order = true
-        mount = Math.round(actualmount) - 1
-        bmount = mount / close_price
-        actualmount = actualmount - mount
-        // console.log({z, close_price, actualmount, t: 'buy'})
-        return {
-          z,
-          order: 'buy',
-          mount,
-          actualprice: close_price,
-          m1: actualmount,
-          bmount,
-        }
-      } else if (
-        adviced &&
-        direction === 'down' &&
-        cciAdviced === 'down' &&
-        order
-      ) {
-        order = false
-        percent =
-          ((bmount * close_price + actualmount) * 100) / (actualmount + mount) -
-          100
-        sum += percent
-        actualmount = bmount * close_price + actualmount
-        // console.log({z, close_price, actualmount, t: 'sell'})
-        return {
-          z,
-          percent,
-          order: 'sell',
-          actualprice: close_price,
-          m1: actualmount,
-        }
-      } else if (z === candlesticks.close.length - 1 && order) {
-        percent =
-          ((bmount * close_price + actualmount) * 100) / (actualmount + mount) -
-          100
-          sum += percent
-        actualmount = bmount * close_price + actualmount
+candlesticks.close
+  .map((v: any, z: any) => {
+    if (z < diffIndexCandlesticksMACD || z < diffIndexCandlesticksCCI)
+      return 'none'
+    if (z === candlesticks.close.length -1)
+      console.log({
+        z,
+        diffIndexCandlesticksMACD: z - diffIndexCandlesticksMACD,
+        diffIndexCandlesticksCCI: z - diffIndexCandlesticksCCI,
+      })
+    close_price = v
+    adviced = macd[z - diffIndexCandlesticksMACD]?.adviced
+    direction = macd[z - diffIndexCandlesticksMACD]?.direction
+    cciAdviced = cci[z - diffIndexCandlesticksCCI]
+    
+    if (adviced && direction === 'up' && cciAdviced === 'up' && !order) {
+      order = true
+      mount = Math.round(actualmount) - 1
+      bmount = mount / close_price
+      actualmount = actualmount - mount
+      // console.log({z, close_price, actualmount, t: 'buy'})
+      return {
+        z,
+        order: 'buy',
+        mount,
+        actualprice: close_price,
+        m1: actualmount,
+        bmount,
+      }
+    } else if (
+      adviced &&
+      direction === 'down' &&
+      cciAdviced === 'down' &&
+      order
+    ) {
+      order = false
+      percent =
+        ((bmount * close_price + actualmount) * 100) / (actualmount + mount) -
+        100
+      sum += percent
+      actualmount = bmount * close_price + actualmount
+      // console.log({z, close_price, actualmount, t: 'sell'})
+      return {
+        z,
+        percent,
+        order: 'sell',
+        actualprice: close_price,
+        m1: actualmount,
+      }
+    } else if (z === candlesticks.close.length - 1 && order) {
+      percent =
+        ((bmount * close_price + actualmount) * 100) / (actualmount + mount) -
+        100
+      sum += percent
+      actualmount = bmount * close_price + actualmount
 
-        // console.log({z, close_price, actualmount, t: 'sell'})
-        return {
-          z,
-          percent,
-          order: 'sell',
-          actualprice: close_price,
-          m1: actualmount,
-        }
-      } else return 'none'
-    })
-    .filter((v) => v !== 'none')
-)
-
+      // console.log({z, close_price, actualmount, t: 'sell'})
+      return {
+        z,
+        percent,
+        order: 'sell',
+        actualprice: close_price,
+        m1: actualmount,
+      }
+    } else return 'none'
+  })
+  .filter((v) => v !== 'none')
+console.log({
+  macd: macd.length,
+  cci: cci.length,
+  diffIndexCandlesticksMACD,
+  diffIndexCandlesticksCCI,
+  closelength: candlesticks.close.length,
+})
 console.log(sum)
 
 // console.log(

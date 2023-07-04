@@ -21,7 +21,7 @@ export class Bot {
   private secondaryCurrencyMount: number = 0
   private testSecondaryCurrencyMount: number = 0
   private order: boolean = false
-private mountToBuy: number = 0
+  private mountToBuy: number = 0
 
   private sensitives: sensitives = {
     cciPeriod: 0,
@@ -166,11 +166,11 @@ private mountToBuy: number = 0
     })
   }
 
-  private buy(values:any) {
+  private buy(values: any) {
     this.db.insertOne(values)
   }
 
-  private sell(values:any) {
+  private sell(values: any) {
     this.db.insertOne(values)
   }
 
@@ -188,54 +188,70 @@ private mountToBuy: number = 0
               high: [],
               low: [],
               close: [],
-              period: this.sensitives.cciPeriod
+              period: this.sensitives.cciPeriod,
             }
-            Object.values(chart)
-              .map((v: any) => {
-                candlesticks.open.push(Number(v.open))
-                candlesticks.high.push(Number(v.high))
-                candlesticks.low.push(Number(v.low))
-                candlesticks.close.push(Number(v.close))
-              })
-                     let lastPrice = candlesticks.close.reverse()[0]
-           
-             let cci = Signal_CCI(candlesticks).reverse()
-            let macd = Signal_MACD(candlesticks.close, this.sensitives.sensitiveMACD).reverse()
-            if ( macd[0]?.adviced &&  macd[0]?.direction === 'up' && cci[0] === 'up' && !this.order) {
+            Object.values(chart).map((v: any) => {
+              candlesticks.open.push(Number(v.open))
+              candlesticks.high.push(Number(v.high))
+              candlesticks.low.push(Number(v.low))
+              candlesticks.close.push(Number(v.close))
+            })
+            let lastPrice = candlesticks.close.reverse()[0]
+
+            let cci = Signal_CCI(candlesticks).reverse()
+            let macd = Signal_MACD(
+              candlesticks.close,
+              this.sensitives.sensitiveMACD
+            ).reverse()
+            if (
+              macd[1]?.adviced &&
+              macd[1]?.direction === 'up' &&
+              cci[1] === 'up' &&
+              !this.order
+            ) {
               this.order = true
               this.mountToBuy = Math.round(this.testPrincipalCurrencyMount) - 1
-              this.testSecondaryCurrencyMount = this.mountToBuy / Number(lastPrice)
-              this.testPrincipalCurrencyMount = this.testPrincipalCurrencyMount - this.mountToBuy
-               this.buy({
+              this.testSecondaryCurrencyMount =
+                this.mountToBuy / Number(lastPrice)
+              this.testPrincipalCurrencyMount =
+                this.testPrincipalCurrencyMount - this.mountToBuy
+              this.buy({
                 order: 'buy',
                 buyMount: this.testSecondaryCurrencyMount,
-                mountToBuy:this.mountToBuy,
+                mountToBuy: this.mountToBuy,
                 actualMount: this.testPrincipalCurrencyMount,
                 actualPrice: lastPrice,
-createAt: new Date().toLocaleString("en-US",{timeZone: "UTC"}),
-
+                createAt: new Date().toLocaleString('en-US', {
+                  timeZone: 'UTC',
+                }),
               })
             } else if (
-           macd[0]?.adviced &&
-          macd[0]?.direction === 'down' &&
-          cci[0] === 'down' &&
-          this.order
-        ) {
-          this.order = false
-          this.testPrincipalCurrencyMount = this.testSecondaryCurrencyMount * Number(lastPrice) + this.testPrincipalCurrencyMount
-          this.sell( {
-            order: 'sell',
-            actualMount: this.testPrincipalCurrencyMount,
-            sellMount:this.testSecondaryCurrencyMount,
-            profitPercent: ((this.testSecondaryCurrencyMount * Number(lastPrice) + this.testPrincipalCurrencyMount) * 100) /
-              (this.testPrincipalCurrencyMount + this.mountToBuy) -
-            100
-,
-            sellPrice: lastPrice,
-              createAt: new Date().toLocaleString("en-US",{timeZone: "UTC"}),
-          })
-this.testSecondaryCurrencyMount = 0
-        } 
+              macd[1]?.adviced &&
+              macd[1]?.direction === 'down' &&
+              cci[1] === 'down' &&
+              this.order
+            ) {
+              this.order = false
+              this.testPrincipalCurrencyMount =
+                this.testSecondaryCurrencyMount * Number(lastPrice) +
+                this.testPrincipalCurrencyMount
+              this.sell({
+                order: 'sell',
+                actualMount: this.testPrincipalCurrencyMount,
+                sellMount: this.testSecondaryCurrencyMount,
+                profitPercent:
+                  ((this.testSecondaryCurrencyMount * Number(lastPrice) +
+                    this.testPrincipalCurrencyMount) *
+                    100) /
+                    (this.testPrincipalCurrencyMount + this.mountToBuy) -
+                  100,
+                sellPrice: lastPrice,
+                createAt: new Date().toLocaleString('en-US', {
+                  timeZone: 'UTC',
+                }),
+              })
+              this.testSecondaryCurrencyMount = 0
+            }
             // console.info(values.close.reverse()[0])
             // let tick = binance.last(chart)
             // const last = chart[tick].close

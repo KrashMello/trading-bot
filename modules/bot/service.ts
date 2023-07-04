@@ -2,7 +2,7 @@ import { candlestick, sensitives } from './types'
 import { Signal_CCI, Signal_MACD } from '@Modules/indicators/index'
 import { signalMACDOutput } from '@Modules/indicators/types'
 
-export function findSensitive(candlesticks: candlestick):sensitives {
+export function findSensitive(candlesticks: candlestick): sensitives {
   let sensitive: sensitives[] = []
   let actualmount = 10
   let order = false
@@ -19,7 +19,7 @@ export function findSensitive(candlesticks: candlestick):sensitives {
   let totalPercent = 0
   let cciAdviced
 
-  for (let x = 0; x < 9; x++) {
+  for (let x = 0; x < 4; x++) {
     candlesticks.period = x + 3
     cci = Signal_CCI(candlesticks)
     adviced = false
