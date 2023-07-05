@@ -19,7 +19,7 @@ export function findSensitive(candlesticks: candlestick): sensitives {
   let totalPercent = 0
   let cciAdviced
 
-  for (let x = 0; x < 4; x++) {
+  for (let x = 0; x < 19; x++) {
     candlesticks.period = x + 3
     cci = Signal_CCI(candlesticks)
     adviced = false
@@ -113,6 +113,12 @@ export function findSensitive(candlesticks: candlestick): sensitives {
       }
       // a must be equal to b
       return 0
+    })
+    .map((v, i) => {
+      return v.percent === sensitive[i - 1]?.percent ? undefined : v
+    })
+    .filter((v) => {
+      return v !== undefined
     })
     .reverse()[0] as any
 }
